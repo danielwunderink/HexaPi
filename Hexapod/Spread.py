@@ -6,17 +6,17 @@ pwm2 = PWM(0x41)
 pwm1.setPWMFreq(60)
 pwm2.setPWMFreq(60)
 
-mid = 400
+mid = 300
 #end = 590
 
 for channel in range(0, 6):
     pwm2.setPWM(channel, 0, mid)
-    time.sleep(0.2)
+    time.sleep(0.5)
     
 for channel in range(8, 14):
     pwm2.setPWM(channel, 0, mid)
-    time.sleep(0.2)
+    time.sleep(0.5)
     
 for channel in range(0, 6):
     pwm1.setPWM(channel, 0, mid)
-    time.sleep(0.2)
+    time.sleep(0.5)
