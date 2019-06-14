@@ -1,6 +1,5 @@
 
 import pygame, sys, time, os, math, threading
-
 from pygame.locals import *
 from pygame import event
 from Adafruit_PWM_Servo_Driver import PWM	
@@ -10,8 +9,75 @@ pwm1 = PWM(0x41)
 pwm0.setPWMFreq(60)
 pwm1.setPWMFreq(60)
 
-global foot_vectors
-foot_vectors=[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]
+foot_vectors = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+gait_array_0 = [[], [], [], [], [], [], [], [], [], [], [], []]
+gait_array_1 = [[], [], [], [], [], [], [], [], [], [], [], []]
+gait_array_2 = [[], [], [], [], [], [], [], [], [], [], [], []]
+gait_array_3 = [[], [], [], [], [], [], [], [], [], [], [], []]
+gait_selected = [[], [], [], [], [], [], [], [], [], [], [], []]
+
+def read_in_gaits():
+    import csv
+    global gait_array_1
+    global gait_array_2
+    global gait_array_3
+    global gait_array_0
+
+    with open('gaits/gait_0.csv') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        row_count = 0
+        for row in csv_reader:
+            col_count = 0
+            gait_array_col = 0
+            for col_entry in row:
+                if (row_count != 0) and ((col_count%3 != 0)):
+                    gait_array_0[gait_array_col].append(col_entry)
+                    gait_array_col += 1
+                col_count += 1  
+            row_count += 1
+        print('Processed %s rows.' % (row_count))
+
+    with open('gaits/gait_1.csv') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        row_count = 0
+        for row in csv_reader:
+            col_count = 0
+            gait_array_col = 0
+            for col_entry in row:
+                if (row_count != 0) and ((col_count%3 != 0)):
+                    gait_array_1[gait_array_col].append(col_entry)
+                    gait_array_col += 1
+                col_count += 1  
+            row_count += 1
+        print('Processed %s rows.' % (row_count))
+
+    with open('gaits/gait_2.csv') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        row_count = 0
+        for row in csv_reader:
+            col_count = 0
+            gait_array_col = 0
+            for col_entry in row:
+                if (row_count != 0) and ((col_count%3 != 0)):
+                    gait_array_2[gait_array_col].append(col_entry)
+                    gait_array_col += 1
+                col_count += 1  
+            row_count += 1
+        print('Processed %s rows.' % (row_count))
+
+    with open('gaits/gait_3.csv') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        row_count = 0
+        for row in csv_reader:
+            col_count = 0
+            gait_array_col = 0
+            for col_entry in row:
+                if (row_count != 0) and ((col_count%3 != 0)):
+                    gait_array_3[gait_array_col].append(col_entry)
+                    gait_array_col += 1
+                col_count += 1  
+            row_count += 1
+        print('Processed %s rows.' % (row_count))
 
 #Take in calucluated angles for a motor and moves it using PWM
 def move_motor(leg, part, current_anlge, end_angle):
@@ -48,7 +114,8 @@ def move_motor(leg, part, current_anlge, end_angle):
                 pwm1.setPWM(channel[leg][part][1], 0, pulse)
                 
 #Takes in the current angles and moves each leg with the "move_motor" function
-def move_legs(current_angles, end_anges):
+def move_legs(current_angles, end_angles):
+        print "MOVING LEGS"
         for leg in range(6):
                 for part in range(3):
                         move_motor(leg, part,current_angles[3*leg+part],end_angles[3*leg+part])
@@ -56,7 +123,7 @@ def move_legs(current_angles, end_anges):
         current_angles = end_angles
 
 #Takes in the desired XYZ components for each leg and outputs the end angles
-def calculate_angles(foot_coordinates):
+def calc_angles(foot_coordinates):
     l1 = 3
     l2 = 7.5
     p_magnitudes = [0,0,0,0,0,0]
@@ -66,6 +133,11 @@ def calculate_angles(foot_coordinates):
     foot_angles = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     for i in range(6):
         p_magnitudes[i] = (((foot_coordinates[i][0])**2) + ((foot_coordinates[i][1])**2) + ((foot_coordinates[i][2])**2))**(0.5)
+
+        #fix div by 0 error
+        if(p_magnitudes[i] == 0):
+            p_magnitudes[i] = 0.00000000001
+        
         alpha_acos_piece = (((l1**2)+(l2**2)-(p_magnitudes[i]**2))/(2 * l1 * l2))
         #fix acos domain error
         if (alpha_acos_piece<=-1):
@@ -89,14 +161,16 @@ def calculate_angles(foot_coordinates):
            
         thetas_rads[i] = (math.pi/2) - math.acos(theta_acos_piece) - math.atan(theta_atan_piece)
         
-        betas_rads[i] = (math.pi/2) - math.atan((foot_vectors[i][1])/(foot_vectors[i][0]))
-        foot_angles[3*i] = alphas_rads[i]*(180/math.pi)
-        foot_angles[3*i+1] = thetas_rads[i]*(180/math.pi)
-        foot_angles[3*i+2] = betas_rads[i]*(180/math.pi)
+        betas_rads[i] = (math.pi/2) - math.atan((foot_coordinates[i][1])/(foot_coordinates[i][0]))
+        foot_angles[3*i] = round(alphas_rads[i]*(180/math.pi),0)
+        foot_angles[3*i+1] = round(thetas_rads[i]*(180/math.pi),0)
+        foot_angles[3*i+2] = round(betas_rads[i]*(180/math.pi),0)
     return foot_angles
 
 #Calculating Foot Vectors
 def calc_foot_vectors(Qx,Qy,Qr):
+        foot_vectors=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        
         global_datum = [[10.61,6.13],[0,12.25],[-10.61,6.13],[-10.61,-6.13],[0,-12.25],[10.61,-6.13]]
         Qxy_mag = (((global_datum[0][0])**2)+((global_datum[0][1])**2))**(0.5)
 
@@ -115,6 +189,7 @@ def calc_foot_vectors(Qx,Qy,Qr):
         for leg in range(6):
              foot_vectors[leg][0]= round(((Qx + global_datum[leg][0]*math.cos(body_rotation) - global_datum[leg][1]*math.sin(body_rotation))-global_datum[leg][0])/2,2)
              foot_vectors[leg][1]= round(((-Qy + global_datum[leg][0]*math.sin(body_rotation) + global_datum[leg][1]*math.cos(body_rotation))-global_datum[leg][1])/2,2)
+             foot_vectors[leg][2]= round(((foot_vectors[leg][0]**2)+(foot_vectors[leg][1]**2))**(0.5),2)
         return foot_vectors
 
 #Update the button values
@@ -181,7 +256,7 @@ def update_inputs(self):
         #global b_js_left
         #global b_js_right
         global b_start
-        #global b_up
+        global b_up
         #global b_right
         #global b_down
         #global b_left
@@ -198,8 +273,8 @@ def update_inputs(self):
         b_select	=button_state[0]
         #b_js_left	=button_state[1]
         #b_js_right	=button_state[2]
-        b_start	=button_state[3]
-        #b_up		=button_state[4]
+        b_start	        =button_state[3]
+        b_up		=button_state[4]
         #b_right	=button_state[5]
         #b_down		=button_state[6]
         #b_left		=button_state[7]
@@ -218,18 +293,51 @@ def update_inputs(self):
         return button_analog
 
 def gait_main():
+        global shutdown_sequence
+        global standup_sequence
+        global reset_sequence
+        global ready_to_walk
+        
+        shutdown_complete = False
         while not shutdown_complete:
             if standup_sequence:
                 #stand up code
+                ready_to_walk = True
                 standup_sequence = False
             if reset_sequence:
                 #reset code
+                ready_to_walk = True
                 reset_sequence = False
             if shutdown_sequence:
                 #shutdown code
-                shutdown_sequence = False
                 shutdown_complete = True
+                shutdown_sequence = False
+                break
             #if not doing any special sequence: do walking stuff
+            #print foot_vectors
+            current_angles = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            foot_coordinates = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+            x_datum = 3
+            y_datum = 0
+            z_datum = -7.5
+            for i in range(len(gait_array_0[0])):
+                for leg in range(6):
+                    #access z column of gait csv and multiply it by the magnitude of the foot vector for that leg
+                    foot_coordinates[leg][2] = float(gait_array_0[leg*2][i])*foot_vectors[leg][2] + z_datum
+                    #access the xy column of the gait csv and multiply it by the x component of the foot vector
+                    foot_coordinates[leg][0] = float(gait_array_0[leg*2+1][i])*foot_vectors[leg][0] + x_datum
+                    #access the xy column of the gait csv and multiply it by the y component of the foot vector
+                    foot_coordinates[leg][1] = float(gait_array_0[leg*2+1][i])*foot_vectors[leg][1] + y_datum
+                    #call calc angles
+                    calculated_angles = calc_angles(foot_coordinates)
+                    print calculated_angles
+                    #move the robot
+                    #move_legs(current_angles,calculated_angles)
+                    current_angles = calculated_angles
+        
+        print "Gait thread exited."
+            
+                
 
 def controller_main():
         #Check if there are any controllers connected
@@ -257,7 +365,6 @@ def controller_main():
 
         #Define controller as the first one found
         contr = pygame.joystick.Joystick(0)
-        print "press PS button to Exit"
         update_inputs(contr)
         exit_program = False
         on_off_state = False
@@ -265,12 +372,17 @@ def controller_main():
         global shutdown_sequence
         global standup_sequence
         global reset_sequence
+        global ready_to_walk
+        
+        ready_to_walk = False #marked true after reset and standup sequence
         shutdown_sequence = False #tucks in legs to body then de-engergizes motors.
         standup_sequence = False #move legs to datums from having been powered off.
         reset_sequence = False #moves legs to datums from having been walking.
 
-        gait_thread = threading.Thread(target=gait_main)
-        
+
+        #gait_thread = threading.Thread(target=gait_main)
+        print "press START and SELECT buttons to Exit"
+        print "press PS button to turn Hexapi On and Off"
         while not exit_program:
             for event in pygame.event.get():
                 #print pygame.event.EventType
@@ -288,7 +400,8 @@ def controller_main():
                             shutdown_sequence = True
                         else:
                             print "turning on: start stand up sequence"
-                            gait_thread.start()
+                            #gait_thread = threading.Thread(target=gait_main)
+                            #gait_thread.start()
                             standup_sequence = True
                         on_off_state ^= True
                         
@@ -297,10 +410,33 @@ def controller_main():
                         reset_sequence = True
                         shutdown_sequence = True
                         exit_program = True
-                    if (b_square == 1) or (b_triangle == 1) or (b_circle == 1) or (b_cross == 1):
+                    if ((b_square == 1) or (b_up == 1) or (b_circle == 1) or (b_cross == 1)) and b_select == 1:
+                        print "New gait chosen. Reset."
+                        if b_square == 1 and b_select == 1:
+                            global gate_selected
+                            gait_selected = gait_array_0
+                            print "Gait pattern 0 chosen"
+                            print len(gait_selected[0])
+                            gait_thread = threading.Thread(target=gait_main)
+                            gait_thread.start()
+                        if b_up == 1 and b_select == 1:
+                            gait_selected = gait_array_1
+                            print "Gait pattern 1 chosen"
+                            gait_thread = threading.Thread(target=gait_main)
+                            gait_thread.start()
+                        if b_circle == 1 and b_select == 1:
+                            gait_selected = gait_array_2
+                            print "Gait pattern 2 chosen"
+                            gait_thread = threading.Thread(target=gait_main)
+                            gait_thread.start()
+                        if b_cross == 1 and b_select == 1:
+                            gait_selected = gait_array_3
+                            print "Gait pattern 3 chosen"
+                            gait_thread = threading.Thread(target=gait_main)
+                            gait_thread.start()
                         reset_sequence = True
 
-                if event.type == pygame.JOYAXISMOTION:
+                if on_off_state and ready_to_walk and event.type == pygame.JOYAXISMOTION:
                     #print "joystick moved. Recalculate foot vectors"
                     prev_a_js_left_x = a_js_left_x
                     prev_a_js_left_y = a_js_left_y 
@@ -308,13 +444,15 @@ def controller_main():
                     prev_a_js_right_y = a_js_right_y
                     update_inputs(contr)
                     if (a_js_left_x != prev_a_js_left_x) or (a_js_left_y != prev_a_js_left_y) or(a_js_right_x != prev_a_js_right_x):
-                        calc_foot_vectors(a_js_left_x,a_js_left_y,a_js_right_x)
-                        print foot_vectors
+                        global foot_vectors
+                        foot_vectors = calc_foot_vectors(a_js_left_x,a_js_left_y,a_js_right_x)
+                        #print foot_vectors
             #time.sleep(0.2)
         print "Code successfully terminated"
 
 
 #Start program
+read_in_gaits()
 controller_main()
 
 

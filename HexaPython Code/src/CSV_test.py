@@ -34,6 +34,9 @@ with open('3 step gait.csv') as csv_file:
             col_count += 1  
         row_count += 1
     print('Processed %s rows.' % (row_count))
-    
-for column in range(0,len(gait_array)):
-    print(gait_array[column])
+
+for i in range(5):
+    for leg in range(6):
+        print gait_array[leg*2][i]
+        print gait_array[leg*2+1][i]
+
