@@ -5,30 +5,63 @@ import time
 
 pwm1 = PWM(0x40)
 pwm2 = PWM(0x41)
-pwm1.setPWMFreq(60)
-pwm2.setPWMFreq(60)
-channel = 4
-start   = 160
-mid     = 360
-end     = 595
+pwm1.setPWMFreq(50)
+pwm2.setPWMFreq(50)
+channel = 3
+start   = 120
+mid     = 340
+end     = 560
+pwm = pwm1
 
-pwm2.setPWM(channel, 0, start)
+def my_range(start, end, step):
+    while start <= end:
+        yield start
+        start += step
+
+tickmin	= 0
+tickmax = 0
+
+try:
+	for tickmin in my_range(0,4096,4):
+		pwm.setPWM(channel, 0, tickmin)
+		time.sleep(0.2)
+		print(tickmin)
+except KeyboardInterrupt:
+	pass
+
+
+
+
+try:
+	for tickmax in my_range(tickmin,4096,4):
+		pwm.setPWM(channel, 0, tickmax)
+		time.sleep(0.2)
+		print(tickmax)
+except KeyboardInterrupt:
+	pass
+
+print("FAF")
+print("\n")
+print(tickmin)
+print(tickmax)
+
+tickmid = (tickmin+tickmax)/2
+
+
+pwm.setPWM(channel, 0, tickmin)
 time.sleep(2)
-pwm2.setPWM(channel, 0, mid)
+pwm.setPWM(channel, 0, tickmid)
 time.sleep(2)
-pwm2.setPWM(channel, 0, end)
+pwm.setPWM(channel, 0, tickmax)
 time.sleep(2)
-pwm2.setPWM(channel, 0, mid)
+pwm.setPWM(channel, 0, tickmid)
 
 
 # angle to pulse
 #min_angle   = 150
 #slope       = 2.833
 
-#def my_range(start, end, step):
-#    while start <= end:
-#        yield start
-#        start += step
+
 
 
 

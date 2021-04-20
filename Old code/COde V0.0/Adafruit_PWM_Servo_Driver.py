@@ -18,7 +18,7 @@ class PWM :
   __PRESCALE           = 0xFE
   __LED0_ON_L          = 0x06
   __LED0_ON_H          = 0x07
-  __LED0_OFF_L         = 0x08
+  __LED0_OFF_L         = 0x08c
   __LED0_OFF_H         = 0x09
   __ALL_LED_ON_L       = 0xFA
   __ALL_LED_ON_H       = 0xFB
@@ -49,12 +49,12 @@ class PWM :
     self.setAllPWM(0, 0)
     self.i2c.write8(self.__MODE2, self.__OUTDRV)
     self.i2c.write8(self.__MODE1, self.__ALLCALL)
-    time.sleep(0.005)                                       # wait for oscillator
+    #time.sleep(0.005)                                       # wait for oscillator
     
     mode1 = self.i2c.readU8(self.__MODE1)
     mode1 = mode1 & ~self.__SLEEP                 # wake up (reset sleep)
     self.i2c.write8(self.__MODE1, mode1)
-    time.sleep(0.005)                             # wait for oscillator
+    #time.sleep(0.005)                             # wait for oscillator
 
   def setPWMFreq(self, freq):
     "Sets the PWM frequency"
